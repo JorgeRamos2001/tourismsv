@@ -38,6 +38,10 @@ public class JwtService {
         return extractClaims(token).getSubject();
     }
 
+    public long getAccessExpirationMs() {
+        return accessExpirationMs;
+    }
+
     public boolean isValid(String token) {
         try {
             extractClaims(token);
