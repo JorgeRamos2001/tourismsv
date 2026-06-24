@@ -8,6 +8,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -78,6 +79,12 @@ public class GlobalExceptionHandler {
         log.warn("Data integrity violation: {}", ex.getMessage());
         return buildResponse(HttpStatus.CONFLICT, "DATA_INTEGRITY_VIOLATION",
                 "The operation conflicts with existing data", request);
+    }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ExceptionResponse> handleAuthorizationDenied(AuthorizationDeniedException ex, HttpServletRequest request) {
+        log.warn("Authorization denied: {}", ex.getMessage());
+        return buildResponse(HttpStatus.FORBIDDEN, "AUTHORIZATION_DENIED", "You do not have permission to perform this action.", request);
     }
 
     @ExceptionHandler(Exception.class)
