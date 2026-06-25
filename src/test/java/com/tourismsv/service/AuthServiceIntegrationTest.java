@@ -72,7 +72,10 @@ class AuthServiceIntegrationTest {
         assertThat(refreshBody.accessToken()).isNotBlank();
         assertThat(refreshBody.refreshToken()).isEqualTo(loginBody.refreshToken());
 
-        var logoutRes = restClient.post().uri("/api/v1/auth/logout").header("Authorization", "Bearer " + refreshBody.refreshToken()).retrieve().toBodilessEntity();
+        var logoutRes = restClient.post().uri("/api/v1/auth/logout")
+                .body(new RefreshTokenRequest(refreshBody.refreshToken()))
+                .header("Authorization", "Bearer " + refreshBody.accessToken())
+                .retrieve().toBodilessEntity();
 
         assertThat(logoutRes.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(204));
         assertThat(refreshTokenRepository.findByToken(refreshBody.refreshToken())).isEmpty();
@@ -83,31 +86,36 @@ class AuthServiceIntegrationTest {
         var request = new RegisterRequest("Test User", "duplicate@example.com", "password123");
         restClient.post().uri("/api/v1/auth/register").body(request).retrieve().toEntity(AuthResponse.class);
 
-        var response = restClient.post().uri("/api/v1/auth/register").body(request).retrieve().toEntity(AuthResponse.class);
+        org.springframework.web.client.HttpClientErrorException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                org.springframework.web.client.HttpClientErrorException.class,
+                () -> restClient.post().uri("/api/v1/auth/register").body(request).retrieve().toEntity(AuthResponse.class)
+        );
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(409));
+        assertThat(exception.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(409));
     }
 
     @Test
-    void login_shouldReturn401WhenInvalidCredentials() throws Exception {
+    void login_shouldReturn401WhenInvalidCredentials() {
         var request = new RegisterRequest("Test User", "logintest@example.com", "password123");
         restClient.post().uri("/api/v1/auth/register").body(request).retrieve().toEntity(AuthResponse.class);
 
         var badLogin = new LoginRequest("logintest@example.com", "wrongpassword");
-        try {
-            restClient.post().uri("/api/v1/auth/login").body(badLogin).retrieve().toEntity(AuthResponse.class);
-        } catch (Exception e) {
-            assertThat(e).isInstanceOf(org.springframework.web.client.HttpClientErrorException.Unauthorized.class);
-        }
+        org.springframework.web.client.HttpClientErrorException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                org.springframework.web.client.HttpClientErrorException.class,
+                () -> restClient.post().uri("/api/v1/auth/login").body(badLogin).retrieve().toEntity(AuthResponse.class)
+        );
+
+        assertThat(exception.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(401));
     }
 
     @Test
-    void register_shouldReturn400WhenValidationFails() throws Exception {
+    void register_shouldReturn400WhenValidationFails() {
         var request = new RegisterRequest("", "invalid", "pw");
-        try {
-            restClient.post().uri("/api/v1/auth/register").body(request).retrieve().toEntity(AuthResponse.class);
-        } catch (Exception e) {
-            assertThat(e).isInstanceOf(org.springframework.web.client.HttpClientErrorException.BadRequest.class);
-        }
+        org.springframework.web.client.HttpClientErrorException exception = org.junit.jupiter.api.Assertions.assertThrows(
+                org.springframework.web.client.HttpClientErrorException.class,
+                () -> restClient.post().uri("/api/v1/auth/register").body(request).retrieve().toEntity(AuthResponse.class)
+        );
+
+        assertThat(exception.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(400));
     }
 }
