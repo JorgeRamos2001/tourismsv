@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.test.context.ActiveProfiles;
@@ -23,8 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ActiveProfiles("test")
 class AuthServiceIntegrationTest {
 
-    @Autowired
-    private RestClient.Builder restClientBuilder;
+    @LocalServerPort
+    private int port;
 
     private RestClient restClient;
 
@@ -36,7 +37,7 @@ class AuthServiceIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        restClient = restClientBuilder.build();
+        restClient = RestClient.create("http://localhost:" + port);
         refreshTokenRepository.deleteAll();
         userRepository.deleteAll();
     }
