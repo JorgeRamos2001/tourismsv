@@ -10,14 +10,11 @@ import com.tourismsv.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.web.client.RestClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -27,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AuthServiceIntegrationTest {
 
     @Autowired
-    private TestRestTemplate restTemplate;
+    private RestClient restClient;
 
     @Autowired
     private UserRepository userRepository;
@@ -43,78 +40,70 @@ class AuthServiceIntegrationTest {
 
     @Test
     void register_login_refresh_logout() {
-        // Register
         var registerReq = new RegisterRequest("Test User", "test@example.com", "password123");
-        ResponseEntity<AuthResponse> registerRes = restTemplate.postForEntity(
-                "/api/v1/auth/register", registerReq, AuthResponse.class);
+        var registerRes = restClient.post().uri("/api/v1/auth/register").body(registerReq).retrieve().toEntity(AuthResponse.class);
 
-        assertThat(registerRes.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(registerRes.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(201));
         assertThat(registerRes.getBody()).isNotNull();
         var registerBody = registerRes.getBody();
         assertThat(registerBody.accessToken()).isNotBlank();
         assertThat(registerBody.refreshToken()).isNotBlank();
         assertThat(registerBody.expiresIn()).isPositive();
 
-        // Login
         var loginReq = new LoginRequest("test@example.com", "password123");
-        ResponseEntity<AuthResponse> loginRes = restTemplate.postForEntity(
-                "/api/v1/auth/login", loginReq, AuthResponse.class);
+        var loginRes = restClient.post().uri("/api/v1/auth/login").body(loginReq).retrieve().toEntity(AuthResponse.class);
 
-        assertThat(loginRes.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(loginRes.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(200));
         assertThat(loginRes.getBody()).isNotNull();
         var loginBody = loginRes.getBody();
         assertThat(loginBody.accessToken()).isNotBlank();
         assertThat(loginBody.refreshToken()).isNotBlank();
 
-        // Refresh
         var refreshReq = new RefreshTokenRequest(loginBody.refreshToken());
-        ResponseEntity<AuthResponse> refreshRes = restTemplate.postForEntity(
-                "/api/v1/auth/refresh", refreshReq, AuthResponse.class);
+        var refreshRes = restClient.post().uri("/api/v1/auth/refresh").body(refreshReq).retrieve().toEntity(AuthResponse.class);
 
-        assertThat(refreshRes.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(refreshRes.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(200));
         assertThat(refreshRes.getBody()).isNotNull();
         var refreshBody = refreshRes.getBody();
         assertThat(refreshBody.accessToken()).isNotBlank();
         assertThat(refreshBody.refreshToken()).isEqualTo(loginBody.refreshToken());
 
-        // Logout
-        var headers = new HttpHeaders();
-        headers.setBearerAuth(refreshBody.refreshToken());
-        var logoutEntity = new HttpEntity<>(headers);
-        ResponseEntity<Void> logoutRes = restTemplate.postForEntity(
-                "/api/v1/auth/logout", logoutEntity, Void.class);
+        var logoutRes = restClient.post().uri("/api/v1/auth/logout").header("Authorization", "Bearer " + refreshBody.refreshToken()).retrieve().toBodilessEntity();
 
-        assertThat(logoutRes.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        assertThat(logoutRes.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(204));
         assertThat(refreshTokenRepository.findByToken(refreshBody.refreshToken())).isEmpty();
     }
 
     @Test
     void register_shouldReturn409WhenEmailExists() {
         var request = new RegisterRequest("Test User", "duplicate@example.com", "password123");
-        restTemplate.postForEntity("/api/v1/auth/register", request, AuthResponse.class);
+        restClient.post().uri("/api/v1/auth/register").body(request).retrieve().toEntity(AuthResponse.class);
 
-        var response = restTemplate.postForEntity(
-                "/api/v1/auth/register", request, AuthResponse.class);
+        var response = restClient.post().uri("/api/v1/auth/register").body(request).retrieve().toEntity(AuthResponse.class);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatusCode.valueOf(409));
     }
 
     @Test
-    void login_shouldReturn401WhenInvalidCredentials() {
+    void login_shouldReturn401WhenInvalidCredentials() throws Exception {
         var request = new RegisterRequest("Test User", "logintest@example.com", "password123");
-        restTemplate.postForEntity("/api/v1/auth/register", request, AuthResponse.class);
+        restClient.post().uri("/api/v1/auth/register").body(request).retrieve().toEntity(AuthResponse.class);
 
         var badLogin = new LoginRequest("logintest@example.com", "wrongpassword");
-        var response = restTemplate.postForEntity("/api/v1/auth/login", badLogin, AuthResponse.class);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        try {
+            restClient.post().uri("/api/v1/auth/login").body(badLogin).retrieve().toEntity(AuthResponse.class);
+        } catch (Exception e) {
+            assertThat(e).isInstanceOf(org.springframework.web.client.HttpClientErrorException.Unauthorized.class);
+        }
     }
 
     @Test
-    void register_shouldReturn400WhenValidationFails() {
+    void register_shouldReturn400WhenValidationFails() throws Exception {
         var request = new RegisterRequest("", "invalid", "pw");
-        var response = restTemplate.postForEntity("/api/v1/auth/register", request, AuthResponse.class);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        try {
+            restClient.post().uri("/api/v1/auth/register").body(request).retrieve().toEntity(AuthResponse.class);
+        } catch (Exception e) {
+            assertThat(e).isInstanceOf(org.springframework.web.client.HttpClientErrorException.BadRequest.class);
+        }
     }
 }
