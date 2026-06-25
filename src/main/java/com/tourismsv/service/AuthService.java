@@ -86,6 +86,20 @@ public class AuthService {
     }
 
     @Transactional
+    public AuthResponse loginWithGoogle(String email, String name, String urlAvatar) {
+        var user = userRepository.findByEmail(email)
+                .orElseGet(() -> userRepository.save(User.builder()
+                        .name(name)
+                        .email(email)
+                        .urlAvatar(urlAvatar)
+                        .role(Role.TOURIST)
+                        .state(UserState.ACTIVE)
+                        .build()));
+
+        return generateAuthResponse(user);
+    }
+
+    @Transactional
     public void logout(String refreshToken) {
         refreshTokenRepository.findByToken(refreshToken)
                 .ifPresent(refreshTokenRepository::delete);
