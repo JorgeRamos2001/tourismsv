@@ -34,12 +34,15 @@ public class DestinationService {
     private final DestinationReviewRepository reviewRepository;
     private final DestinationTypeRepository destinationTypeRepository;
 
+    @Transactional(readOnly = true)
     public Page<DestinationResponse> findAll(String name, DestinationState state, UUID destinationTypeId,
                                               String country, String city, Pageable pageable) {
-        return destinationRepository.search(name, state, destinationTypeId, country, city, pageable)
+        var stateStr = state != null ? state.name() : null;
+        return destinationRepository.search(name, stateStr, destinationTypeId, country, city, pageable)
                 .map(this::toResponse);
     }
 
+    @Transactional(readOnly = true)
     public DestinationResponse findById(UUID id) {
         var destination = destinationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Destination", "id", id));
@@ -96,6 +99,7 @@ public class DestinationService {
         destinationRepository.deleteById(id);
     }
 
+    @Transactional(readOnly = true)
     public List<DestinationImageResponse> findImagesByDestinationId(UUID destinationId) {
         if (!destinationRepository.existsById(destinationId)) {
             throw new ResourceNotFoundException("Destination", "id", destinationId);

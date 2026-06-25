@@ -21,10 +21,12 @@ public class UserService {
 
     private final UserRepository userRepository;
 
+    @Transactional(readOnly = true)
     public Page<UserResponse> findAll(Pageable pageable) {
         return userRepository.findAll(pageable).map(this::toResponse);
     }
 
+    @Transactional(readOnly = true)
     public UserResponse findById(UUID id) {
         return userRepository.findById(id)
                 .map(this::toResponse)
@@ -67,7 +69,7 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
-    private UserResponse toResponse(User user) {
+    public UserResponse toResponse(User user) {
         return new UserResponse(
                 user.getId(),
                 user.getName(),

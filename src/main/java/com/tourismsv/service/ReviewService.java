@@ -23,6 +23,7 @@ public class ReviewService {
     private final DestinationReviewRepository reviewRepository;
     private final DestinationRepository destinationRepository;
 
+    @Transactional(readOnly = true)
     public Page<ReviewResponse> findByDestinationId(UUID destinationId, Pageable pageable) {
         if (!destinationRepository.existsById(destinationId)) {
             throw new ResourceNotFoundException("Destination", "id", destinationId);

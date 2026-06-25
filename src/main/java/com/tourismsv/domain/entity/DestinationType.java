@@ -23,7 +23,7 @@ public class DestinationType {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 255)
     private String name;
 
     @Column(nullable = false, columnDefinition = "TEXT")

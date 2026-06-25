@@ -19,6 +19,7 @@ public class LikeService {
     private final DestinationLikeRepository likeRepository;
     private final DestinationRepository destinationRepository;
 
+    @Transactional(readOnly = true)
     public LikeResponse getStatus(UUID destinationId, User user) {
         if (!destinationRepository.existsById(destinationId)) {
             throw new ResourceNotFoundException("Destination", "id", destinationId);

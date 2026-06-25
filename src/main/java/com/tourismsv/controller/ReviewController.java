@@ -7,6 +7,7 @@ import com.tourismsv.repository.UserRepository;
 import com.tourismsv.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -26,7 +27,7 @@ public class ReviewController {
 
     @GetMapping
     public ResponseEntity<Page<ReviewResponse>> findByDestination(@PathVariable UUID destinationId,
-                                                                   Pageable pageable) {
+                                                                    @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(reviewService.findByDestinationId(destinationId, pageable));
     }
 

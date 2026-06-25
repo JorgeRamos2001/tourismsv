@@ -16,14 +16,25 @@ public interface DestinationRepository extends JpaRepository<Destination, UUID> 
 
     Page<Destination> findByDestinationTypeId(UUID destinationTypeId, Pageable pageable);
 
-    @Query("SELECT d FROM Destination d WHERE " +
-           "(:name IS NULL OR LOWER(d.name) LIKE LOWER(CONCAT('%', :name, '%'))) AND " +
-           "(:state IS NULL OR d.state = :state) AND " +
-           "(:destinationTypeId IS NULL OR d.destinationType.id = :destinationTypeId) AND " +
-           "(:country IS NULL OR LOWER(d.country) LIKE LOWER(CONCAT('%', :country, '%'))) AND " +
-           "(:city IS NULL OR LOWER(d.city) LIKE LOWER(CONCAT('%', :city, '%')))")
+    @Query(value = """
+            SELECT * FROM destinations d
+            WHERE (:name IS NULL OR LOWER(d.name) LIKE LOWER(CONCAT('%', :name, '%')))
+              AND (:state IS NULL OR d.state::text = :state)
+              AND (:destinationTypeId IS NULL OR d.destination_type_id = :destinationTypeId)
+              AND (:country IS NULL OR LOWER(d.country) LIKE LOWER(CONCAT('%', :country, '%')))
+              AND (:city IS NULL OR LOWER(d.city) LIKE LOWER(CONCAT('%', :city, '%')))
+            """,
+           countQuery = """
+            SELECT COUNT(*) FROM destinations d
+            WHERE (:name IS NULL OR LOWER(d.name) LIKE LOWER(CONCAT('%', :name, '%')))
+              AND (:state IS NULL OR d.state::text = :state)
+              AND (:destinationTypeId IS NULL OR d.destination_type_id = :destinationTypeId)
+              AND (:country IS NULL OR LOWER(d.country) LIKE LOWER(CONCAT('%', :country, '%')))
+              AND (:city IS NULL OR LOWER(d.city) LIKE LOWER(CONCAT('%', :city, '%')))
+            """,
+           nativeQuery = true)
     Page<Destination> search(@Param("name") String name,
-                             @Param("state") DestinationState state,
+                             @Param("state") String state,
                              @Param("destinationTypeId") UUID destinationTypeId,
                              @Param("country") String country,
                              @Param("city") String city,

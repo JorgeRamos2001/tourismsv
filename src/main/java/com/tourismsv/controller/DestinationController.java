@@ -7,6 +7,7 @@ import com.tourismsv.dto.response.DestinationResponse;
 import com.tourismsv.service.DestinationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -32,7 +33,7 @@ public class DestinationController {
             @RequestParam(required = false) UUID destinationTypeId,
             @RequestParam(required = false) String country,
             @RequestParam(required = false) String city,
-            Pageable pageable) {
+            @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(
                 destinationService.findAll(name, state, destinationTypeId, country, city, pageable));
     }

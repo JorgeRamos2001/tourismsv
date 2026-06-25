@@ -21,6 +21,7 @@ public class SaveService {
     private final DestinationSaveRepository saveRepository;
     private final DestinationRepository destinationRepository;
 
+    @Transactional(readOnly = true)
     public SaveResponse getStatus(UUID destinationId, User user) {
         if (!destinationRepository.existsById(destinationId)) {
             throw new ResourceNotFoundException("Destination", "id", destinationId);
@@ -55,6 +56,7 @@ public class SaveService {
         return new SaveResponse(saved, count);
     }
 
+    @Transactional(readOnly = true)
     public Page<com.tourismsv.dto.response.DestinationResponse> findSavedDestinations(User user, Pageable pageable) {
         var saves = saveRepository.findByUserId(user.getId(), pageable);
         return saves.map(s -> {
