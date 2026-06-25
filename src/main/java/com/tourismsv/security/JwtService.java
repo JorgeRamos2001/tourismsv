@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.UUID;
 
 @Service
 public class JwtService {
@@ -31,7 +32,14 @@ public class JwtService {
     }
 
     public String generateRefreshToken(String email) {
-        return generateToken(email, refreshExpirationMs);
+        var now = new Date();
+        return Jwts.builder()
+                .subject(email)
+                .id(UUID.randomUUID().toString())
+                .issuedAt(now)
+                .expiration(new Date(now.getTime() + refreshExpirationMs))
+                .signWith(secretKey)
+                .compact();
     }
 
     public String extractEmail(String token) {
