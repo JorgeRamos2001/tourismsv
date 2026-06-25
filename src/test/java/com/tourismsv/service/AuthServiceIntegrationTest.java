@@ -24,6 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AuthServiceIntegrationTest {
 
     @Autowired
+    private RestClient.Builder restClientBuilder;
+
     private RestClient restClient;
 
     @Autowired
@@ -33,7 +35,8 @@ class AuthServiceIntegrationTest {
     private RefreshTokenRepository refreshTokenRepository;
 
     @BeforeEach
-    void cleanUp() {
+    void setUp() {
+        restClient = restClientBuilder.build();
         refreshTokenRepository.deleteAll();
         userRepository.deleteAll();
     }
