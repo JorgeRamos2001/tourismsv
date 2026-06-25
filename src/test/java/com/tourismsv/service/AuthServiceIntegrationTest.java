@@ -7,6 +7,7 @@ import com.tourismsv.dto.request.RegisterRequest;
 import com.tourismsv.dto.response.AuthResponse;
 import com.tourismsv.repository.RefreshTokenRepository;
 import com.tourismsv.repository.UserRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.client.RestClient;
 
@@ -38,6 +40,15 @@ class AuthServiceIntegrationTest {
     @BeforeEach
     void setUp() {
         restClient = RestClient.create("http://localhost:" + port);
+        cleanDatabase();
+    }
+
+    @AfterEach
+    void tearDown() {
+        cleanDatabase();
+    }
+
+    private void cleanDatabase() {
         refreshTokenRepository.deleteAll();
         userRepository.deleteAll();
     }
@@ -73,6 +84,7 @@ class AuthServiceIntegrationTest {
         assertThat(refreshBody.refreshToken()).isEqualTo(loginBody.refreshToken());
 
         var logoutRes = restClient.post().uri("/api/v1/auth/logout")
+                .contentType(MediaType.APPLICATION_JSON)
                 .body(new RefreshTokenRequest(refreshBody.refreshToken()))
                 .header("Authorization", "Bearer " + refreshBody.accessToken())
                 .retrieve().toBodilessEntity();
