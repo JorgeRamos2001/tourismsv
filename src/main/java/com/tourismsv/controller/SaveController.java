@@ -6,6 +6,7 @@ import com.tourismsv.dto.response.SaveResponse;
 import com.tourismsv.repository.UserRepository;
 import com.tourismsv.service.SaveService;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -42,7 +43,7 @@ public class SaveController {
 
     @GetMapping("/list")
     public ResponseEntity<Page<DestinationResponse>> listSaved(Authentication authentication,
-                                                                Pageable pageable) {
+                                                                 @ParameterObject Pageable pageable) {
         var user = userRepository.findByEmail(authentication.getName())
                 .orElseThrow();
         return ResponseEntity.ok(saveService.findSavedDestinations(user, pageable));

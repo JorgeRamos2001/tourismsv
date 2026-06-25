@@ -19,12 +19,14 @@ public class DestinationTypeService {
 
     private final DestinationTypeRepository repository;
 
+    @Transactional(readOnly = true)
     public List<DestinationTypeResponse> findAll() {
         return repository.findAll().stream()
                 .map(this::toResponse)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public DestinationTypeResponse findById(UUID id) {
         return repository.findById(id)
                 .map(this::toResponse)
