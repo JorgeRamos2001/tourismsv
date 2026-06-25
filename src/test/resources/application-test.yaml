@@ -1,0 +1,17 @@
+spring:
+  flyway:
+    clean-disabled: false
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+  mail:
+    host: localhost
+    port: 3025
+    username: test
+    password: test
+
+app:
+  jwt:
+    secret: dGVzdC1zZWNyZXQta2V5LWZvci1pbnRlZ3JhdGlvbi10ZXN0cy13aXRoLWp3dC1hdXRoZW50aWNhdGlvbi0xMjM0NTY=
